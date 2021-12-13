@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { protect } = require('../middlewares/auth');
 
 // controllers
 const { 
@@ -10,10 +11,10 @@ const {
 } = require('../controllers/contacts');
 
 // routes
-router.route('/').post(createContact);
-router.route('/').get(getContacts);
-router.route('/:contactId').get(getContact);
-router.route('/:contactId').patch(updateContact);
-router.route('/:contactId').delete(deleteContact);
+router.route('/').post(protect,createContact);
+router.route('/').get(protect, getContacts);
+router.route('/:contactId').get(protect, getContact);
+router.route('/:contactId').patch(protect, updateContact);
+router.route('/:contactId').delete(protect, deleteContact);
 
 module.exports = router;

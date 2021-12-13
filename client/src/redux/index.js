@@ -5,7 +5,7 @@ import contactReducer from './contacts';
 
 const rootReducer = combineReducers({
    user: userReducer,
-   contact: contactReducer
+   contacts: contactReducer
 })
 
 export default rootReducer;

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useHistory } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
 import { makeStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
@@ -15,7 +15,6 @@ import Typography from '@material-ui/core/Typography';
 import PersonIcon from '@material-ui/icons/Person';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
-import axios from 'axios';
 import { getContacts, deleteContact } from '../../redux/contacts';
 
 const useStyles = makeStyles((theme) => ({
@@ -31,46 +30,22 @@ const useStyles = makeStyles((theme) => ({
 
 const ContactList = () => {
   const classes = useStyles();
-  const history = useHistory();
 
   const dispatch = useDispatch();
 
-  const [contacts, setContacts] = useState([]);
-
   const user = useSelector(state => state.user.user);
-  const contact = useSelector(state => state.contact);
+  const contactState = useSelector(state => state.contacts);
+  const { contacts } = contactState;
   
   useEffect(() => {
-    const config = {
-      header: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`
-      },
-    };
-    
-    const fetchContacts = async() => {
-      const { data } = await axios.get(`http://localhost:5000/api/users/${user.id}`, config);
-      setContacts(data.user.Contacts);
-    }      
-    fetchContacts();
-  }, [user]);
-
-  dispatch(getContacts(contacts));
-  console.log(contact);
+    dispatch(getContacts(user.id));
+  }, [dispatch, user]);
    
   const handleDelete = async(id) => {
-    const { data } = await axios.delete(`http://localhost:5000/api/contacts/${id}`);
-    setContacts(contacts.filter((contact) => contact.id !== id));
-    // dispatch(deleteContact);
+    dispatch(deleteContact(id));
+    dispatch(getContacts(user.id));
   }
   
-  
-  const handleEdit = async(id) => {
-    const { data } = await axios.patch(`http://localhost:5000/api/contacts/${id}`);
-    console.log(data);
-    history.push("/");
-  }
-
   return (
     <div className={classes.root}>
       <Grid container spacing={2}>
@@ -94,9 +69,11 @@ const ContactList = () => {
                     secondary={i.phone}
                   />
                   <ListItemSecondaryAction>
-                    <IconButton edge="end" aria-label="edit" onClick={() => handleEdit(i.id)}>
-                      <EditIcon />
-                    </IconButton>
+                    <Link to={"update/" + i.id}>
+                      <IconButton edge="end" aria-label="edit">
+                        <EditIcon />
+                      </IconButton>
+                    </Link>
                     <IconButton edge="end" aria-label="delete" onClick={() => handleDelete(i.id)}>
                       <DeleteIcon />
                     </IconButton>

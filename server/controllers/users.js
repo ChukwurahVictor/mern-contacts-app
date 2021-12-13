@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Contact = require('../models/Contact');
+const ErrorResponse = require("../utils/errorResponse");
 
 // associations
 User.hasMany(Contact, {
@@ -10,17 +11,10 @@ module.exports.registerUser = async(req, res, next) => {
    const { name, email, password } = req.body;
    try {
       const userExists = await User.findOne({ where: { email }});
-      if (userExists) {
-         return res.status(400).json({
-            success: false,
-            message: 'User already exist.'
-         })
-      }
+      if (userExists) return next(new ErrorResponse("User already exist.", 400));
+         
       if (password.length < 7) {
-         return res.status(400).json({
-            success: false,
-            message: 'Password must be atleast 7 characters long.'
-         })
+         return next(new ErrorResponse("Password must be atleast 7 characters long.", 400));
       }
       
       const newUser = await User.create({
@@ -35,7 +29,7 @@ module.exports.registerUser = async(req, res, next) => {
          authToken
       })
    } catch (err) {
-      console.log(err);
+      next(err);
    }
 }
 
@@ -43,20 +37,11 @@ module.exports.loginUser = async(req, res, next) => {
    try {
       const { email, password } = req.body;
       const user = await User.findOne({ where: { email }});
-      if (!user) {
-         return res.status(400).json({
-            success: false,
-            message: "Invalid credentials entered."
-         })
-      }
+      if (!user) return next(new ErrorResponse("Invalid credentials entered.", 400));
 
       const validPassword = await user.validPassword(password);
-      if(!validPassword) {
-         return res.status(400).json({
-            success: false,
-            message: "Invalid password entered."
-         })
-      }
+      if(!validPassword) return next(new ErrorResponse("Invalid credentials entered.", 400));
+
       const authToken = user.getSignedToken();
       res.status(200).json({
          success: true,
@@ -65,7 +50,7 @@ module.exports.loginUser = async(req, res, next) => {
          authToken
       })
    } catch (err) {
-      console.log(err);
+      next(err);
    }
 }
 
@@ -77,7 +62,7 @@ module.exports.getUsers = async(req, res, next) => {
          users
       })
    } catch (err) {
-      console.log(err);
+      next(err);
    }
 }
 
@@ -87,25 +72,13 @@ module.exports.getUser = async(req, res, next) => {
       const user = await User.findByPk(userId, {
          include: [ Contact ]
       })
-      if (!user) {
-         return res.status(400).json({
-            success: false,
-            message: 'User not found.'
-         });
-      }
+      if (!user) return next(new ErrorResponse("User not found.", 400));
+      
       res.status(200).json({
          success: true,
          user
       })
    } catch (err) {
-      console.log(err);
+      next(err);
    }
 }
-
-// module.exports.updateUser = async(req, res, next) => {
-//    res.send('Update user route');
-// }
-
-// module.exports.deleteUser = async(req, res, next) => {
-//    res.send('Delete user route');
-// }

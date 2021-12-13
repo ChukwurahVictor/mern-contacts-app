@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
-import axios from 'axios';
 import { useSelector, useDispatch } from 'react-redux';
-import { useHistory } from 'react-router-dom';
-import { getContacts, addContact } from '../../redux/contacts';
+import { addContact } from '../../redux/contacts';
 
 const useStyles = makeStyles((theme) => ({
    root: {
@@ -22,7 +20,6 @@ const useStyles = makeStyles((theme) => ({
 
 const AddContact = () => {
    const classes = useStyles();
-   const history = useHistory();
 
    const [firstname, setFirstname] = useState('');
    const [lastname, setLastname] = useState('');
@@ -32,52 +29,43 @@ const AddContact = () => {
 
    const dispatch = useDispatch();
    const { user } = useSelector(state => state.user);
-
-   const addContact = async(e) => {
-      // e.preventDefault();
-      // console.log(data);
-      
-      const config = {
-         header: {
-            "Content-Type": "application/json",
-         },
-      };
-      
-      const userId = user.id;
+   const contactState = useSelector(state => state.contacts);
+   
+   const userId = user.id;
+     
+   const handleSubmit = (e) => {
+      e.preventDefault();
       
       try {
-         const { data } = await axios.post('http://localhost:5000/api/contacts', 
-         { firstname, lastname, email, phone, userId }, 
-         config
-         );
          
-         const contactAdded = dispatch(addContact(data));
-         if(contactAdded) {
-            return history.push("/");
-         } else {
-            setFirstname(firstname);
-            setLastname(lastname);
-            setEmail(email);
-            setPhone(phone);
-         }
+         dispatch(addContact({ firstname, lastname, email, phone, userId }));
+
+         setFirstname("");
+         setLastname("");
+         setEmail("");
+         setPhone("");
+
+         setError(contactState.error);
+         setTimeout(() => {
+            setError('');
+            console.log(contactState.error);
+         }, 5000);
             
-            setFirstname(firstname);
-            setLastname("");
-            setEmail("");
-            setPhone("");
-
-         } catch (error) {
-            setError(error.response.data.message);
-            setTimeout(() => {
-               setError('');
-            }, 5000);
-         }
+      } catch(error) {
+         console.log(error);
+                  
+         setFirstname(firstname);
+         setLastname(lastname);
+         setEmail(email);
+         setPhone(phone);
       }
-
+   }
+   console.log(error);
+   
    return (
       <>
       {error && <span className="error-message">{error}</span>}
-      <form onSubmit={addContact} className={classes.form} noValidate>
+      <form onSubmit={handleSubmit} className={classes.form} noValidate>
           <TextField
             variant="outlined"
             margin="normal"

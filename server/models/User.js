@@ -38,9 +38,13 @@ User.prototype.validPassword = async function(password) {
 }
 
 User.prototype.getSignedToken = function() {
-   return  jwt.sign({ id: this.userId }, "mysecretkey", {
-      expiresIn: "24hr",
-   });
+   return  jwt.sign({ 
+      id: this.id,
+      exp: Math.floor((Date.now() / 1000) + (60 * 2)),
+      iat: Math.floor(Date.now())
+   },
+      "mysecretkey"
+   );
 }
 
 module.exports = User;

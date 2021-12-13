@@ -1,38 +1,25 @@
 const User = require('../models/User');
 const Contact = require('../models/Contact');
+const ErrorResponse = require("../utils/errorResponse");
 
 // associations
 Contact.belongsTo(User, {
    foreignKey: 'userId'
 })
 
-
 module.exports.createContact = async(req, res, next) => {
    const { firstname, lastname, email, phone, userId } = req.body;
    try {
+      const contactExists = await Contact.findOne({ where: { phone, userId }});
+      if (contactExists) return next(new ErrorResponse("Phone already exist.", 400));
+
       // check that all fields are filled
       if (!firstname || !lastname || !email || !phone) {
-         return res.status(400).json({
-            success: false,
-            message: 'Please, enter all fields'
-         })
-      }
-
-      const nameExists = await Contact.findOne({ where: { phone, userId }});
-      if (nameExists) {
-         return res.status(400).json({
-            success: false,
-            message: 'Phone already exist.'
-         })
+         return next(new ErrorResponse("Please, enter all fields.", 400));
       }
 
       const userExists = await User.findByPk(userId);
-      if(!userExists) {
-         return res.status(400).json({
-            success: false,
-            message: 'User does not exist.'
-         })
-      }
+      if(!userExists) return next(new ErrorResponse("User does not exist.", 400));
 
       const newContact = await Contact.create({
          firstname,
@@ -46,7 +33,7 @@ module.exports.createContact = async(req, res, next) => {
          newContact
       })
    } catch (err) {
-      console.log(err);
+      next(err);
    }
 }
 
@@ -58,7 +45,7 @@ module.exports.getContacts = async(req, res, next) => {
          contacts
       })
    } catch (err) {
-      console.log(err);
+      next(err);
    }
 }
 
@@ -68,18 +55,14 @@ module.exports.getContact = async(req, res, next) => {
       const contact = await Contact.findByPk(contactId, {
          include: [ User ]
       })
-      if (!contact) {
-         return res.status(400).json({
-            success: false,
-            message: 'Contact not found.'
-         });
-      }
+      if (!contact) return next(new ErrorResponse("Contact not found.", 400));
+
       res.status(200).json({
          success: true,
          contact
       })
    } catch (err) {
-      console.log(err);
+      next(err);
    }
 }
 
@@ -89,19 +72,15 @@ module.exports.updateContact = async(req, res, next) => {
       const [ updated ] = await Contact.update(req.body, {
          where: { id: contactId }
       })
-      if (!updated) {
-         return res.status(400).json({
-            success: false,
-            message: 'Error updating contact.'
-         })
-      }
+      if (!updated) return next(new ErrorResponse("Error updating contact.", 400));
+
       const updatedContact = await Contact.findOne({ where: { id: contactId }});
       res.status(200).json({
          success: true,
          updatedContact
       })
    } catch (err) {
-      console.log(err);
+      next(err);
    }
 }
 
@@ -111,17 +90,13 @@ module.exports.deleteContact = async(req, res, next) => {
       const deleted = await Contact.destroy({
          where: { id: contactId }
       })
-      if (!deleted) {
-         return res.status(400).json({
-            success: false,
-            message: 'Error deleting contact.'
-         })
-      }
+      if (!deleted) return next(new ErrorResponse("Error deleting contact.", 400));
+
       res.status(200).json({
          success: true,
          message: 'Contact deleted successfully.'
       })
    } catch (err) {
-      console.log(err);
+      next(err);
    }
 }
